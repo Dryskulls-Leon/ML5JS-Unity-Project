@@ -1,6 +1,7 @@
 using System;
 using System.Net.WebSockets;
 using NativeWebSocket;
+using Unity.VisualScripting;
 using UnityEngine;
 
 [Serializable]
@@ -35,6 +36,7 @@ public class PoseData
 public class WebTest1 : MonoBehaviour
 {
     NativeWebSocket.WebSocket websocket;
+    [Header("KeyPoints")]
     public Transform rightHand;
     public Transform leftHand;
     public Transform rightElbow;
@@ -52,6 +54,17 @@ public class WebTest1 : MonoBehaviour
     public Transform rightKnee;
     public Transform leftAnkle;
     public Transform rightAnkle;
+    [Header("Bones")]
+    public Transform leftUpperArm;
+    public Transform rightUpperArm;
+    public Transform leftLowerArm;
+    public Transform rightLowerArm;
+    public Transform leftUpperLeg;
+    public Transform rightUpperLeg;
+    public Transform leftLowerLeg;
+    public Transform rightLowerLeg;
+    public Transform shoulders;
+    public Transform hips;
 
     async void Start()
     {
@@ -101,11 +114,38 @@ public class WebTest1 : MonoBehaviour
         joint.position = Vector3.Lerp(joint.position, newPos, 0.5f);
     }
 
+    void ConnectJoints(Transform a, Transform b, Transform bone)
+    {
+        if (a == null || b == null || bone == null) return;
+
+        bone.position = (a.position + b.position) / 2f;
+
+        Vector3 dir = b.position - a.position;
+
+        bone.up = dir;
+
+        float distance = dir.magnitude;
+        bone.localScale = new Vector3(0.2f , distance / 2f, 0.2f);
+    }
     void Update()
     {
 #if !UNITY_WEBGL || UNITY_EDITOR
         websocket.DispatchMessageQueue();
 #endif
+        ConnectJoints(leftShoulder, leftElbow, leftUpperArm);
+        ConnectJoints(leftElbow, leftHand, leftLowerArm);
+
+        ConnectJoints(rightShoulder, rightElbow, rightUpperArm);
+        ConnectJoints(rightElbow, rightHand, rightLowerArm);
+
+        ConnectJoints(leftHip, leftKnee, leftUpperLeg);
+        ConnectJoints(leftKnee, leftAnkle, leftLowerLeg);
+
+        ConnectJoints(rightHip, rightKnee, rightUpperLeg);
+        ConnectJoints(rightKnee, rightAnkle, rightLowerLeg);
+
+        ConnectJoints(leftShoulder, rightShoulder, shoulders);
+        ConnectJoints(leftHip, rightHip, hips);
     }
 
     private async void OnApplicationQuit()

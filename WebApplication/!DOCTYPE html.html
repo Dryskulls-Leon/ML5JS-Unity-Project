@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My ML Website</title>
+
+<!-- p5.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+<!-- ml5.js -->
+<script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f4f4f4;
+}
+
+header {
+    background: #333;
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+nav {
+    background: #555;
+    padding: 10px;
+    text-align: center;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: bold;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+.container {
+    padding: 20px;
+    text-align: center;
+}
+
+footer {
+    background: #333;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    margin-top: 20px;
+}
+
+canvas {
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>My ML Website</h1>
+<p>Body Pose Detection Demo</p>
+</header>
+
+<nav>
+<a href="#">Home</a>
+<a href="#">About</a>
+<a href="#">Contact</a>
+</nav>
+
+<div class="container">
+<h2>Body Pose Detection</h2>
+<p>Stand in front of your webcam and move.</p>
+
+<!-- p5 canvas will appear here -->
+<div id="pose-container"></div>
+
+</div>
+
+<footer>
+<p>© 2026 My Website</p>
+</footer>
+
+<script>
+
+let video;
+let bodyPose;
+let poses = [];
+let connections;
+
+let socket = new WebSocket("ws://localhost:3000")
+
+function preload() {
+    bodyPose = ml5.bodyPose();
+}
+
+function setup() {
+  let canvas = createCanvas(640,480);
+  canvas.parent("pose-container");
+
+  video = createCapture(VIDEO);
+  video.size(640,480);
+  video.hide();
+
+  bodyPose.detectStart(video, gotPoses);
+
+  connections = bodyPose.getSkeleton();
+}
+
+
+
+function draw() {
+  // Draw the webcam video
+  translate(width, 0);
+  scale(-1, 1);
+  image(video, 0, 0, width, height);
+
+  // Draw the skeleton connections
+  for (let i = 0; i < poses.length; i++) {
+    let pose = poses[i];
+    for (let j = 0; j < connections.length; j++) {
+      let pointAIndex = connections[j][0];
+      let pointBIndex = connections[j][1];
+      let pointA = pose.keypoints[pointAIndex];
+      let pointB = pose.keypoints[pointBIndex];
+      // Only draw a line if both points are confident enough
+      if (pointA.confidence > 0.1 && pointB.confidence > 0.1) {
+        stroke(255, 0, 0);
+        strokeWeight(2);
+        line(pointA.x, pointA.y, pointB.x, pointB.y);
+      }
+    }
+  }
+
+  // Draw all the tracked landmark points
+  for (let i = 0; i < poses.length; i++) {
+    let pose = poses[i];
+    for (let j = 0; j < pose.keypoints.length; j++) {
+      let keypoint = pose.keypoints[j];
+      // Only draw a circle if the keypoint's confidence is bigger than 0.1
+      if (keypoint.confidence > 0.1) {
+        fill(0, 255, 0);
+        noStroke();
+        circle(keypoint.x, keypoint.y, 10);
+      }
+    }
+  }
+}
+
+function gotPoses(results){
+  poses = results;
+}
+
+function gotPoses(results){
+  poses = results;
+
+  if (poses.length > 0) {
+
+    const pose = poses[0];
+
+    const rightWrist = pose.keypoints.find(
+      k => k.name === "right_wrist"
+    );
+
+    const data = {
+      right_wrist: {
+        x: rightWrist.x,
+        y: rightWrist.y
+      }
+    };
+
+    socket.send(JSON.stringify(data));
+  }
+}
+
+</script>
+
+</body>
+</html>

@@ -160,20 +160,18 @@ function gotPoses(results){
 function gotPoses(results){
   poses = results;
 
-  if (poses.length > 0) {
+  if (results.length > 0) {
 
-    const pose = poses[0];
+    const pose = results[0];
 
-    const rightWrist = pose.keypoints.find(
-      k => k.name === "right_wrist"
-    );
+    let data = {};
 
-    const data = {
-      right_wrist: {
-        x: rightWrist.x,
-        y: rightWrist.y
-      }
-    };
+    pose.keypoints.forEach(k => {
+      data[k.name] = {
+        x: k.x,
+        y: k.y
+      };
+    });
 
     socket.send(JSON.stringify(data));
   }

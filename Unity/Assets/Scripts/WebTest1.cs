@@ -125,7 +125,7 @@ public class WebTest1 : MonoBehaviour
         bone.up = dir;
 
         float distance = dir.magnitude;
-        bone.localScale = new Vector3(0.2f , distance / 2f, 0.2f);
+        bone.localScale = new Vector3(0.2f , distance / 2f, 1f);
     }
     void Update()
     {

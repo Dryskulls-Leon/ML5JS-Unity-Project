@@ -73,7 +73,7 @@ public class WebTest1 : MonoBehaviour
         websocket.OnMessage += (bytes) =>
         {
             string message = System.Text.Encoding.UTF8.GetString(bytes);
-            Debug.Log(message);
+            //Debug.Log(message);
 
             PoseData data = JsonUtility.FromJson<PoseData>(message);
 
